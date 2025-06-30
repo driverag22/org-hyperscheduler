@@ -17,6 +17,25 @@
                 no-repeat;
 }
 
+/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('http://i.stack.imgur.com/FhHRx.gif') 
+                50% 50% 
+                no-repeat;
+}
+
 body {
   background-color: #121212;
   color: #e0e0e0;
@@ -144,3 +163,107 @@ body.loading .modal {
 .tui-full-calendar .tui-calendar-weekday-grid .tui-weekday-grid-date.sunday .tui-weekday-grid-date-weekday {
   color: #cf6679 !important;
 }
+
+
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading .modal {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+
+.hs-button {
+  background-color: #333;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 2px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.hs-button:hover {
+  background-color: #444;
+  color: #fff;
+  border-color: #777;
+}
+
+.hs-button:active {
+  background-color: #555;
+  border-color: #888;
+}
+
+.hs-button.large {
+  font-size: 18px;
+  padding: 10px 16px;
+}
+
+.render-range {
+  color: #ccc;
+}
+
+/* ==== LIGHTER DARK THEME IN GRAY WITH WHITE TEXT & GRIDLINES ==== */
+
+/* Main calendar canvas */
+#calendar > .tui-full-calendar-layout {
+  background-color: #2b2b2b !important;
+  color:            #ffffff !important;
+}
+
+/* Month view day names, date cells, all-day row */
+#calendar .tui-full-calendar-month-dayname,
+#calendar .tui-full-calendar-grid-date,
+#calendar .tui-full-calendar-grid-allday {
+  background-color: #2b2b2b !important;
+  border-color:     #444444 !important;
+}
+
+/* Time‐column sidebar (hour labels) */
+#calendar .tui-full-calendar-timegrid-left {
+  background-color: #2b2b2b !important;
+}
+#calendar .tui-full-calendar-timegrid-left div {
+  background-color: transparent !important;
+  color:            #ffffff     !important;
+}
+
+/* Main timegrid area & daygrid columns */
+#calendar .tui-full-calendar-timegrid-right,
+#calendar .tui-full-calendar-daygrid {
+  background-color: #2b2b2b !important;
+}
+
+/* Horizontal grid lines */
+#calendar .tui-full-calendar-timegrid-gridline {
+  border-bottom: 1px solid #444444 !important;
+}
+/* Remove half‐hour lines */
+#calendar .tui-full-calendar-timegrid-gridline-half {
+  border-bottom: none !important;
+}
+
+/* Vertical grid lines */
+#calendar .tui-full-calendar-timegrid-vertical-line,
+#calendar .tui-full-calendar-daygrid .tui-grid-ruler {
+  border-left: 1px solid #444444 !important;
+  border-color: #444444 !important;
+}
+
+/* Force all calendar text white */
+#calendar .tui-full-calendar-layout,
+#calendar .tui-full-calendar-layout * {
+  color: #ffffff !important;
+}
+

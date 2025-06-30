@@ -41,9 +41,6 @@ let agenda;
 function setReadonly() {
   calendar.setOptions({isReadOnly:true});
 }
-function setEventListener() {
-  $('#menu-navi').on('click', onClickNavi);
-}
 
 // from https://github.com/nhn/tui.calendar/blob/ac65d491c21b99ba18e179664c96089bd51216c7/examples/js/default.js
 function getDataAction(target) {
@@ -112,8 +109,6 @@ let calendar = new tui.Calendar('#calendar', {
     //   visibleWeeksCount: 4 // visible week count in monthly
     // },
     
-    useCreationPopup: true,
-    useDetailPopup: true,
     taskView: false, 
     usageStatistics: false,
     isReadOnly: false,
@@ -127,7 +122,8 @@ let calendar = new tui.Calendar('#calendar', {
 		hourStart: 8
 	},
     scheduleView:  ['allday', 'time'],
-  });
+});
+
 
 // update calendar entry
 calendar.on('beforeUpdateSchedule', function(event) {
@@ -159,7 +155,6 @@ function getUnixTimestampFromDate(date) {
 function getAgenda() {
     // expect this set from localStorage.
     schedule = JSON.parse(schedule);
-    calendar.createSchedules(schedule);
     fetchNewAgenda();
 }
 
@@ -172,16 +167,6 @@ function fetchNewAgenda()
 
 // calendar call backs
 calendar.on({
-        clickMore: function (e) {
-            console.log('clickMore', e);
-        },
-        clickSchedule: function (e) {
-            console.log('clickSchedule', e);
-            //calendar.openCreationPopup(e.schedule);
-        },
-        clickDayname: function (date) {
-            console.log('clickDayname', date);
-        },
         beforeCreateSchedule: function (e) {
             console.log('beforeCreateSchedule', e);
             e.startUnix = getUnixTimestampFromDate(e.start);
@@ -248,7 +233,7 @@ socket.onmessage = function(event) {
             category: 'time',
             start: agendaItem["startDate"],
             end: agendaItem["endDate"],
-            //isAllDay: agendaItem["allDay"]
+            // isAllDay: agendaItem["allDay"]
         };
 
 
@@ -284,5 +269,5 @@ socket.onerror = function(error) {
 };
 
 
-setEventListener();
 refreshCalendar();
+

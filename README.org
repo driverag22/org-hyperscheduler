@@ -11,6 +11,7 @@ The changes can be summarised as:
  - Month view
  - Replaced buttons with keybindings
  - Dark theme
+ - Removed all onClick stuff and editing from the calendar.
 
 ** What is Hyperscheduling
 #+begin_quote
