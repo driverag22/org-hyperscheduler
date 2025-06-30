@@ -5,6 +5,7 @@
  Copyright © 2022 Dmitry Markushevich
 
  Author: Dmitry Markushevich <dmitrym@gmail.com>
+ Edited by: Diego Rivera Garrido (github: driverag22)
  Keywords: org-mode, calendar
  URL: https://github.com/dmitrym0/org-hyperscheduler
 
@@ -33,241 +34,94 @@
  More info https://github.com/dmitrym0/org-hyperscheduler
 
 */
-// get the schedule from local storage so we can display something immediately.
-let schedule = window.localStorage.getItem('schedule');
+
+// Retrieve stored schedule (not rendered immediately)
+let schedule = window.localStorage.getItem('schedule') || '[]';
 let agenda;
 
-// set readonly mode
-function setReadonly() {
-  calendar.setOptions({isReadOnly:true});
-}
-
-// from https://github.com/nhn/tui.calendar/blob/ac65d491c21b99ba18e179664c96089bd51216c7/examples/js/default.js
-function getDataAction(target) {
-  return target.dataset ? target.dataset.action : target.getAttribute('data-action');
-}
-
-
-// we need to re-render the calendar so that that time/hour marker gets updated.
+// Periodically re-render to update the current-time indicator
 function refreshCalendar() {
-    setTimeout(refreshCalendar, 300000);
-    calendar.render();
+  setTimeout(refreshCalendar, 300000);
+  calendar.render();
 }
 
-// handler for day/week/month views, as well next/previous.
 document.addEventListener('keydown', function(event) {
-  if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
-
+  if (['INPUT','TEXTAREA'].includes(event.target.tagName)) return;
   switch (event.key) {
-    case 'k':
-      calendar.prev();
-      break;
-    case 'j':
-      calendar.next();
-      break;
-    case 't': // today
-      calendar.today();
-      break;
-    case 'd': // day view
-      calendar.changeView('day', true);
-      break;
-    case 'w': // week view
-      calendar.changeView('week', true);
-      break;
-    case 'm': // month view
-      calendar.changeView('month', true);
-      break;
+    case 'k': calendar.prev(); break;
+    case 'j': calendar.next(); break;
+    case 't': calendar.today(); break;
+    case 'd': calendar.changeView('day', true); break;
+    case 'w': calendar.changeView('week', true); break;
+    case 'm': calendar.changeView('month', true); break;
   }
 });
 
-// initialize the calendar object.
-// current support two calendars:
-// - scheduled items (basically anything with a SCHEDULED: property)
-// - time stamped items (in practice this comes from org-gcal)
-let calendar = new tui.Calendar('#calendar', {
-    calendars: [
-    {
-      id: '1',
-      name: 'Scheduled Items',
-      color: '#ffffff',
-      bgColor: '#9e5fff',
-      dragBgColor: '#9e5fff',
-      borderColor: '#9e5fff'
-    },
-    {
-      id: '2',
-      name: 'Timestamped Items',
-      color: '#000000',
-      bgColor: '#00a9ff',
-      dragBgColor: '#00a9ff',
-      borderColor: '#00a9ff'
-    },
-    ],
-
-    defaultView: 'week', // set 'month'
-    // month: {
-    //   visibleWeeksCount: 4 // visible week count in monthly
-    // },
-    
-    taskView: false, 
-    usageStatistics: false,
-    isReadOnly: false,
-      week: {
-        narrowWeekend: true,
-        startDayOfWeek: 1, // monday
-	hourStart: 8
-      },
-	day: {
-		startDayOfWeek: 1,
-		hourStart: 8
-	},
-    scheduleView:  ['allday', 'time'],
+// Initialize calendar in readonly mode (no creation, editing, or popups)
+const calendar = new tui.Calendar('#calendar', {
+  calendars: [
+    { id: '1', name: 'Scheduled Items', color: '#ffffff', bgColor: '#9e5fff', dragBgColor: '#9e5fff', borderColor: '#9e5fff' },
+    { id: '2', name: 'Timestamped Items', color: '#ffffff', bgColor: '#00a9ff', dragBgColor: '#00a9ff', borderColor: '#00a9ff' }
+  ],
+  defaultView: 'week',
+  taskView: false,
+  usageStatistics: false,
+  isReadOnly: true,       // force readonly mode
+  useCreationPopup: false,
+  useDetailPopup:   false,
+  week: { narrowWeekend: true, startDayOfWeek: 1, hourStart: 8 },
+  day:  { startDayOfWeek: 1, hourStart: 8 },
+  scheduleView: ['allday', 'time']
 });
 
-
-// update calendar entry
-calendar.on('beforeUpdateSchedule', function(event) {
-    let updated_schedule = event.schedule;
-    let changes = event.changes;
-    if (changes.start === undefined) {
-        changes.start = updated_schedule.start;
-    }
-        
-    console.log(`schedule:` + schedule + `changes:` + changes);
-
-    console.log(`Time changed to ${getUnixTimestampFromDate(changes.end)}`);
-
-    let update_event_data = {id: updated_schedule.id, start: getUnixTimestampFromDate(changes.start), end: getUnixTimestampFromDate(changes.end)};
-    socket.send(JSON.stringify({"command": "update-event", "data":update_event_data}));
-    calendar.updateSchedule(updated_schedule.id, updated_schedule.calendarId, changes);
-});
-
-
-// convert javascript date to unix time stamp because that's easier to pass around.
-function getUnixTimestampFromDate(date) {
-    return date.getTime() / 1000;
-}
-
-
-
-// fetch agenda
-// TODO: it would be nice if we could start working with cache while loading from emacs.
+// Fetch and render agenda data via WebSocket
 function getAgenda() {
-    // expect this set from localStorage.
-    schedule = JSON.parse(schedule);
-    fetchNewAgenda();
+  fetchNewAgenda();
 }
 
-
-function fetchNewAgenda()
-{
-    $("body").addClass("loading");
-    socket.send(JSON.stringify({"command":"get-agenda"}));
+function fetchNewAgenda() {
+  socket.send(JSON.stringify({ command: 'get-agenda' }));
 }
 
-// calendar call backs
-calendar.on({
-        beforeCreateSchedule: function (e) {
-            console.log('beforeCreateSchedule', e);
-            e.startUnix = getUnixTimestampFromDate(e.start);
-            e.endUnix =  getUnixTimestampFromDate(e.end);
-            socket.send(JSON.stringify({"command":"add-scheduled-event", data: e}));
-            fetchNewAgenda();
-        },
-        beforeDeleteSchedule: function (e) {
-            console.log('beforeDeleteSchedule', e);
-            calendar.deleteSchedule(e.schedule.id, e.schedule.calendarId);
-            socket.send(JSON.stringify({"command":"remove-event", data: {id: e.schedule.id}}));
-            return true;
-        },
-        afterRenderSchedule: function (e) {
-            console.log('after render', e);
-            // const schedule = e.schedule;
-            // let element = calendar.getElement(schedule.id, schedule.calendarId);
-            // console.log('afterRenderSchedule', element);
-        }
-});
+// WebSocket for Emacs communication
+const socket = new WebSocket('ws://127.0.0.1:44445');
 
+socket.onopen = () => getAgenda();
 
-
-// are we in readonly mode?
-function isReadOnly() {
-    // TODO: this will fail for new users with no agenda, and read only mode disabled.
-    return agenda.length === 0 || agenda.at(0).isReadOnly;
-}
-
-
-// -- networking stuff ---- 
-let socket = new WebSocket("ws://127.0.0.1:44445");
-
-
-// callback for when the connection is established
-socket.onopen = function() {
-    getAgenda();
-};
-
-
-// callback for when we get data
 socket.onmessage = function(event) {
-    // TODO: what?
-    if (schedule !== null) {
-        for (let existingEvent of schedule) {
-            calendar.deleteSchedule(existingEvent.id, existingEvent.calendarId, false);
-        }
-    }
-    
-    schedule = [];
-    console.log(`[message] Data received from server: ${event.data}`);
+  // Clear any existing schedules before rendering new ones
+  calendar.clear();
+
+  try {
     agenda = JSON.parse(event.data);
-    console.log(`${agenda.length} items in agenda.`);
-    schedule = [];
-    
-    for (const agendaItem of agenda) {
-        
-        let calendarItem = {
-            id:  agendaItem["ID"],
-            calendarId: 1,
-            dueDateClass: '',
-            // sad attempt at removing links. *TODO*
-            title: agendaItem["ITEM"].replaceAll(/\[\[.*:.*\]\[/ig, '').replaceAll(/\]\]/ig, ''),
-            category: 'time',
-            start: agendaItem["startDate"],
-            end: agendaItem["endDate"],
-            // isAllDay: agendaItem["allDay"]
-        };
+  } catch (err) {
+    console.error('Invalid agenda data:', event.data);
+    return;
+  }
 
+  // Map agenda items to schedules
+  const schedules = agenda.map(item => {
+    const isAllDay = item.allDay === 'true';
+    const calId    = item.SCHEDULED ? '1' : '2';
+    return {
+      id:         item.ID,
+      calendarId: calId,
+      title:      item.ITEM.replace(/\[\[.*?:.*?\]\[|\]\]/g, ''),
+      category:   isAllDay ? 'allday' : 'time',
+      start:      item.startDate,
+      end:        item.endDate
+    };
+  });
 
-        if (agendaItem["allDay"] === "true") {
-            calendarItem.category = 'allday';
-        }
-
-        if (agendaItem["SCHEDULED"] === undefined) {
-            calendarItem.calendarId = 2;
-        }
-        
-        schedule.push(calendarItem);
-    }
-
-
-    $("body").removeClass("loading");
-    
-    calendar.createSchedules(schedule);
-    
-    window.localStorage.setItem('schedule', JSON.stringify(schedule));
+  // Render and persist
+  calendar.createSchedules(schedules);
+  window.localStorage.setItem('schedule', JSON.stringify(schedules));
 };
 
-socket.onclose = function(event) {
-    alert("Lost connection to Emacs. Going into readonly-mode.");
-    setReadonly();
-};
+socket.onclose =     () => console.warn('Connection closed; calendar remains readonly.');
+socket.onerror =     (e) => console.error('WebSocket error:', e);
 
-socket.onerror = function(error) {
-    alert("Connection error. Going into readonly-mode.");
-    // this gets picked up from local storage. probably should unify this with getAgenda()
-    calendar.createSchedules(JSON.parse(schedule));
-    setReadonly();
-};
-
-
+// Start the periodic refresh
 refreshCalendar();
+
 
