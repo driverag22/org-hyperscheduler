@@ -6,6 +6,12 @@
 
 * org-hyperscheduler 
 
+This is a fork I made to change org-hyperscheduler into (more or less) what I want it to be. 
+The changes can be summarised as:
+ - Month view
+ - Replaced buttons with keybindings
+ - Dark theme
+
 ** What is Hyperscheduling
 #+begin_quote
 Hyperscheduling is the idea of fully planning your day using a calendar. Every minute of the day is assigned to some task using a calendar.

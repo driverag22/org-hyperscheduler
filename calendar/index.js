@@ -58,30 +58,30 @@ function refreshCalendar() {
 }
 
 // handler for day/week/month views, as well next/previous.
-function onClickNavi(e) {
-  var action = getDataAction(e.target);
+document.addEventListener('keydown', function(event) {
+  if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
 
-  switch (action) {
-    case 'move-prev':
+  switch (event.key) {
+    case 'k':
       calendar.prev();
       break;
-    case 'move-next':
+    case 'j':
       calendar.next();
       break;
-    case 'move-today':
+    case 't': // today
       calendar.today();
       break;
-    case 'change-day':
+    case 'd': // day view
       calendar.changeView('day', true);
       break;
-    case 'change-week':
+    case 'w': // week view
       calendar.changeView('week', true);
       break;
-    default:
-      return;
+    case 'm': // month view
+      calendar.changeView('month', true);
+      break;
   }
-
-}
+});
 
 // initialize the calendar object.
 // current support two calendars:
@@ -108,9 +108,9 @@ let calendar = new tui.Calendar('#calendar', {
     ],
 
     defaultView: 'week', // set 'month'
-    month: {
-      visibleWeeksCount: 2 // visible week count in monthly
-    },
+    // month: {
+    //   visibleWeeksCount: 4 // visible week count in monthly
+    // },
     
     useCreationPopup: true,
     useDetailPopup: true,
@@ -119,10 +119,14 @@ let calendar = new tui.Calendar('#calendar', {
     isReadOnly: false,
       week: {
         narrowWeekend: true,
-        startDayOfWeek: 1 // monday
+        startDayOfWeek: 1, // monday
+	hourStart: 8
       },
+	day: {
+		startDayOfWeek: 1,
+		hourStart: 8
+	},
     scheduleView:  ['allday', 'time'],
-
   });
 
 // update calendar entry
@@ -244,7 +248,6 @@ socket.onmessage = function(event) {
             category: 'time',
             start: agendaItem["startDate"],
             end: agendaItem["endDate"],
-            //isReadOnly: agendaItem["isReadOnly"],
             //isAllDay: agendaItem["allDay"]
         };
 
@@ -261,12 +264,6 @@ socket.onmessage = function(event) {
     }
 
 
-    
-    if (isReadOnly()) {
-        alert("Readonly mode; please see customized-group org-hyperscheduler");
-        
-    }
-    
     $("body").removeClass("loading");
     
     calendar.createSchedules(schedule);
