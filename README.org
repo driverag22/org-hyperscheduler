@@ -7,8 +7,10 @@
 * org-hyperscheduler 
 
 This is a fork I made to change org-hyperscheduler into (more or less) what I want it to be. 
+I updated it to use the "latest" version of tui-calendar, and revamped the frontend code quite a bit.
+
 The changes can be summarised as:
- - Month view
+ - Added month view
  - Replaced buttons with keybindings
  - Dark theme
  - Removed all onClick stuff and editing from the calendar.
